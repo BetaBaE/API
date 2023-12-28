@@ -39,10 +39,12 @@ const espece = require("./routers/Espece");
 const BL = require("./routers/BLRoute");
 const avancevirement = require("./routers/AvanceVirementroute");
 const EcheanceReel = require("./routers/EcheanceReel");
-
 const EcheanceLoi = require("./routers/EcheanceLoi");
-
 const avanceespece = require("./routers/AvanceEspeceRoute");
+//new version
+const AvanceRoute = require("./routers/AvanceRoute");
+const FactureDesignationRoute = require("./routers/FactureDesignationRoute");
+
 app.use("/", fournissues);
 app.use("/", EcheanceLoi);
 app.use("/", ribTemporaire);
@@ -63,6 +65,8 @@ app.use("/", avancevirement);
 app.use("/", EcheanceReel);
 app.use("/", avanceespece);
 app.use("/", BL);
+app.use("/", AvanceRoute);
+app.use("/", FactureDesignationRoute);
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`Node API listening to port : ${port}`);

@@ -1,7 +1,7 @@
 const { getConnection, getSql } = require("../database/connection");
 const { ribFournisseur } = require("../database/querys");
 
-exports.createRibFournisseurs = async (FournisseurId, rib,swift,banque) => {
+exports.createRibFournisseurs = async (FournisseurId, rib, swift, banque) => {
   try {
     const pool = await getConnection();
 
@@ -77,8 +77,8 @@ exports.getRibFCount = async (req, res, next) => {
 };
 
 exports.updateRibsFournisseurs = async (req, res) => {
-  const { FournisseurId, rib, validation,swift, banque } = req.body;
-  if (FournisseurId == null || rib == null || validation == null ) {
+  const { FournisseurId, rib, validation, swift, banque } = req.body;
+  if (FournisseurId == null || rib == null || validation == null) {
     return res.status(400).json({ error: "all field is required" });
   }
   try {
@@ -94,21 +94,13 @@ exports.updateRibsFournisseurs = async (req, res) => {
       .input("id", getSql().Int, req.params.id)
       .query(ribFournisseur.edit);
 
-    console.log(`UPDATE [dbo].[DAF_RIB_Fournisseurs]
-      SET FournisseurId = ${FournisseurId}
-      ,rib = ${rib}
-      ,swift=${swift}
-      ,validation = ${validation}
-      ,banque=${banque}
-    WHERE id = ${req.params.id} `);
-
     res.json({
       id: req.params.id,
       FournisseurId,
       rib,
       validation,
       swift,
-      banque
+      banque,
     });
   } catch (error) {
     res.status(500);
@@ -133,20 +125,20 @@ exports.getOneRibfournisseurById = async (req, res) => {
   }
 };
 
-// exports.getRibsValid = async (req, res) => {
-//   try {
-//     const pool = await getConnection();
+exports.getRibsValid = async (req, res) => {
+  try {
+    const pool = await getConnection();
 
-//     const result = await pool.request().query(ribFournisseur.RibsValid);
+    const result = await pool.request().query(ribFournisseur.RibsValid);
 
-//     console.log(req.count);
-//     res.set("Content-Range", `fournisseurs 0-${req.count - 1}/${req.count}`);
-//     res.json(result.recordset);
-//   } catch (error) {
-//     res.status(500);
-//     res.send(error.message);
-//   }
-// };
+    console.log(req.count);
+    res.set("Content-Range", `ribFournisseur 0-${req.count - 1}/${req.count}`);
+    res.json(result.recordset);
+  } catch (error) {
+    res.status(500);
+    res.send(error.message);
+  }
+};
 
 exports.RibFournisseursValid = async (req, res) => {
   try {

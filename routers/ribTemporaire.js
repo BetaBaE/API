@@ -9,6 +9,5 @@ const router = express.Router();
 
 router.get("/ribtempo", getRibCount, getRibs);
 router.post("/ribtempo", createRibs);
-router.get("/count", getRibCount);
 
 module.exports = router;

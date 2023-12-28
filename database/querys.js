@@ -1,4 +1,6 @@
 exports.Fournisseurs = {
+  getAll: `SELECT * FROM [dbo].[CMT_Fournisseurs]`,
+
   getallfournisseurwithecheanceLoi: `
   select * from DAF_FOURNISSEURS
 where id in(SELECT
@@ -6,43 +8,44 @@ where id in(SELECT
   FROM [dbo].[DAF_echeanceloiFournisseur])
   `,
 
-  getAllFournisseurs: `SELECT fou.id, fou.addresse, fou.CodeFournisseur, fou.Identifiantfiscal, fou.ICE, fou.nom,
-  echr.modalitePaiement as echeancereel , 
-  echl.modalitePaiement as echeanceloi,
-  fou.mail
-FROM DAF_FOURNISSEURS fou
-LEFT JOIN (
-SELECT idfournisseur, MAX(id) as id
-FROM DAF_echeanceloiFournisseur 
-GROUP BY idfournisseur
-) AS echl_max
-ON fou.id = echl_max.idfournisseur
+  //   getAllFournisseurs: `SELECT fou.id, fou.addresse, fou.CodeFournisseur, fou.Identifiantfiscal, fou.ICE, fou.nom,
+  //   echr.modalitePaiement as echeancereel ,
+  //   echl.modalitePaiement as echeanceloi,
+  //   fou.mail
+  // FROM DAF_FOURNISSEURS fou
+  // LEFT JOIN (
+  // SELECT idfournisseur, MAX(id) as id
+  // FROM DAF_echeanceloiFournisseur
+  // GROUP BY idfournisseur
+  // ) AS echl_max
+  // ON fou.id = echl_max.idfournisseur
 
-LEFT JOIN DAF_echeanceloiFournisseur echl
-ON echl.id = echl_max.id
+  // LEFT JOIN DAF_echeanceloiFournisseur echl
+  // ON echl.id = echl_max.id
 
-LEFT JOIN (
-SELECT idfournisseur, MAX(id) as id
-FROM DAF_echeanceReelFournisseur 
-GROUP BY idfournisseur
-) AS echr_max
-ON fou.id = echr_max.idfournisseur
+  // LEFT JOIN (
+  // SELECT idfournisseur, MAX(id) as id
+  // FROM DAF_echeanceReelFournisseur
+  // GROUP BY idfournisseur
+  // ) AS echr_max
+  // ON fou.id = echr_max.idfournisseur
 
-LEFT JOIN DAF_echeanceReelFournisseur echr
-ON echr.id = echr_max.id
-where 1=1 `,
-  getFournisseursCount: `SELECT COUNT(*) as count FROM DAF_FOURNISSEURS`,
-  createFournisseur: `INSERT INTO DAF_FOURNISSEURS(CodeFournisseur,nom,ICE,Identifiantfiscal,mail,addresse)
+  // LEFT JOIN DAF_echeanceReelFournisseur echr
+  // ON echr.id = echr_max.id
+  // where 1=1 `,
+  getFournisseursCount: `SELECT COUNT(*) as count FROM [dbo].[CMT_Fournisseurs]`,
+
+  createFournisseur: `INSERT INTO CMT_FOURNISSEURS(CodeFournisseur,nom,ICE,Identifiantfiscal,mail,addresse)
      VALUES(@CodeFournisseur, @nom,@ICE,@IF,@mail,@addresse)`,
-  RibsFournisseurValid: `select f.nom, rf.* from [dbo].[DAF_FOURNISSEURS] f, [dbo].[DAF_RIB_Fournisseurs] rf
+  RibsFournisseurValid: `select f.nom, rf.* from [dbo].[CMT_FOURNISSEURS] f, [dbo].[CMT_RIB_Fournisseurs] rf
   where f.id = rf.FournisseurId and rf.validation = 'Validé'`,
-  FournisseursRibValid: `SELECT f.CodeFournisseur, f.nom, rf.* FROM  [dbo].[DAF_FOURNISSEURS] f, [dbo].[DAF_RIB_Fournisseurs] rf
+  FournisseursRibValid: `SELECT f.CodeFournisseur, f.nom, rf.* FROM  [dbo].[CMT_FOURNISSEURS] f, [dbo].[DAF_RIB_Fournisseurs] rf
   where f.id = rf.FournisseurId
   AND rf.validation = 'validé' AND f.nom not in (SELECT
  distinct [NOM]
   FROM [dbo].[DAF_LOG_FACTURE] WHERE etat!='Annulé'  and ModePaiementID =@ovId)`,
-  getOne: `select * from DAF_FOURNISSEURS where id=@id`,
-  update: `update DAF_FOURNISSEURS 
+  getOne: `select * from CMT_FOURNISSEURS where id=@id`,
+  update: `update CMT_FOURNISSEURS 
   set 
      ICE=@ICE,
      Identifiantfiscal=@IF,
@@ -53,14 +56,14 @@ where 1=1 `,
 };
 
 exports.ribTemporaire = {
-  getRibs: `SELECT rt.*, f.nom as fournisseur FROM DAF_RIB_TEMPORAIRE rt, DAF_FOURNISSEURS f WHERE rt.fournisseurid = f.id AND  1=1`,
-  getRibCount: `SELECT COUNT(*) as count FROM DAF_RIB_TEMPORAIRE`,
-  createRibs: `INSERT INTO DAF_RIB_TEMPORAIRE(FournisseurId,rib,swift,banque)
+  getRibs: `SELECT rt.*, f.nom as fournisseur FROM [dbo].[CMT_RIB_TEMPORAIRE] rt, [dbo].[CMT_Fournisseurs] f WHERE rt.fournisseurid = f.id AND  1=1`,
+  getRibCount: `SELECT COUNT(*) as count FROM [dbo].[CMT_RIB_TEMPORAIRE]`,
+  createRibs: `INSERT INTO [dbo].[CMT_RIB_TEMPORAIRE](FournisseurId,rib,swift,banque)
      VALUES( @FournisseurId,@rib,@swift,@banque )`,
 };
 
 exports.ribFournisseur = {
-  create: `INSERT INTO [dbo].[DAF_RIB_Fournisseurs]
+  create: `INSERT INTO [dbo].[CMT_RIB_Fournisseurs]
            ([FournisseurId]
            ,[rib]
            ,[swift]
@@ -72,35 +75,35 @@ exports.ribFournisseur = {
            ,@swift
            ,@banque
           )`,
-  getAll: `SELECT rf.*, f.nom as fournisseur FROM [dbo].[DAF_RIB_Fournisseurs] rf, DAF_FOURNISSEURS f   WHERE rf.fournisseurid = f.id AND  1=1`,
-  getCount: `SELECT COUNT(*) as count FROM [dbo].[DAF_RIB_Fournisseurs]`,
-  edit: `UPDATE [dbo].[DAF_RIB_Fournisseurs]
+  getAll: `SELECT rf.*, f.nom as fournisseur FROM CMT_RIB_Fournisseurs rf, CMT_Fournisseurs f   WHERE rf.fournisseurid = f.id AND  1=1`,
+  getCount: `SELECT COUNT(*) as count FROM CMT_RIB_Fournisseurs`,
+  edit: `UPDATE CMT_RIB_Fournisseurs
       SET FournisseurId = @FournisseurId
       ,rib = @rib
       ,swift=@swift
       ,banque=@banque
       ,validation = @validation
     WHERE id = @id `,
-  getOne: `SELECT rf.*, f.nom as fournisseur FROM [dbo].[DAF_RIB_Fournisseurs] rf, DAF_FOURNISSEURS f   WHERE rf.fournisseurid = f.id AND  rf.id = @id`,
-  RibsValid: `select * from [dbo].[DAF_RIB_Fournisseurs] where validation = 'Validé'`,
-  ribfournisseursvalid: `distinct SELECT * FROM [dbo].[DAF_RIB_Fournisseurs]
-  where validation = 'validé'`,
+  getOne: `SELECT rf.*, f.nom as fournisseur FROM CMT_RIB_Fournisseurs rf, CMT_Fournisseurs f   WHERE rf.fournisseurid = f.id AND  rf.id = @id`,
+  RibsValid: `select * from CMT_RIB_Fournisseurs where validation = 'Validé'`,
+  ribfournisseursvalid: `distinct SELECT * FROM CMT_RIB_Fournisseurs
+  where validation = 'Validé'`,
 };
 
 exports.ribAtner = {
-  getAll: `SELECT * FROM [dbo].[DAF_RIB_ATNER]`,
-  getCount: `SELECT COUNT(*) as count FROM [dbo].[DAF_RIB_ATNER]`,
-  create: `INSERT INTO [dbo].[DAF_RIB_ATNER]
+  getAll: `SELECT * FROM [dbo].[CMT_RIB_ATNER]`,
+  getCount: `SELECT COUNT(*) as count FROM [dbo].[CMT_RIB_ATNER]`,
+  create: `INSERT INTO [dbo].[CMT_RIB_ATNER]
            ([nom]
            ,[rib])
      VALUES
            (@nom
            ,@rib)`,
-  update: `UPDATE [dbo].[DAF_RIB_ATNER]
+  update: `UPDATE [dbo].[CMT_RIB_ATNER]
    SET [nom] = @nom
       ,[rib] = @rib
  WHERE id = @id `,
-  getOne: `SELECT * FROM [dbo].[DAF_RIB_ATNER] WHERE id = @id`,
+  getOne: `SELECT * FROM [dbo].[CMT_RIB_ATNER] WHERE id = @id`,
 };
 
 exports.Users = {
@@ -187,7 +190,7 @@ exports.ordervirements = {
                       where id = @id`,
 
   updateLogFacture: `update [dbo].[DAF_LOG_FACTURE] set Etat = 'Reglee'
-                        where ModePaiementID = @id and Etat='Annulé'`,
+                        where ModePaiementID = @id`,
 
   updateDateExecution: `update [dbo].[DAF_Order_virements] set dateExecution = GETDATE()
                             where id = @id`,
@@ -208,11 +211,65 @@ exports.ordervirements = {
 };
 
 exports.factures = {
-  getCount: `SELECT COUNT(*) as count FROM [dbo].[DAF_FA_VC]`,
-  getAll: `SELECT * FROM [dbo].[DAF_FA_VC] where 1=1 `,
-  getOne: `SELECT * FROM [dbo].[DAF_FA_VC] where id=@id`,
-  getAllFactures: `SELECT * FROM [dbo].[DAF_FA_VC]
-  order by nom , datedoc `,
+  getCount: `SELECT COUNT(*) as count FROM [dbo].[CMT_Facture]`,
+  getAll: `SELECT * FROM [dbo].[CMT_Facture] where 1=1 `,
+  getOne: `SELECT * FROM [dbo].[CMT_Facture] where id=@id`,
+  getAllFactures: `SELECT * FROM [dbo].[CMT_Facture] `,
+  createfacture: `INSERT INTO [dbo].[CMT_Facture]
+           ([id]
+           ,[NumeroFacture]
+           ,[BonCommande]
+           ,[IdFournisseur]
+           ,[DateFacture]
+           ,[DateEcheance]
+           ,[ReferenceAvanace]
+           ,[MontantHT]
+           ,[MontantTVA]
+           ,[MontantTTC]
+           ,[Redacteur]
+           ,[VerifiyMidelt]
+           ,[IdDesignation]
+           ,[Chantier]
+           ,[NetAPayer]
+           ,[Etat]
+          )
+     VALUES
+           (@id
+           ,@NumeroFacture
+           ,@BonCommande
+           ,@IdFournisseur
+           ,@DateFacture
+           ,@DateEcheance
+           ,@ReferenceAvanace
+           ,@MontantHT
+           ,@MontantTVA
+           ,@MontantTTC
+           ,@Redacteur
+           ,@VerifiyMidelt
+           ,@IdDesignation
+           ,@Chantier
+           ,@NetAPayer
+           ,@Etat)
+`,
+
+  updateFacture: `UPDATE [dbo].[CMT_Facture] set NumeroFacture = @NumeroFacture
+      ,BonCommande = @BonCommande
+      ,IdFournisseur = @IdFournisseur
+      ,DateFacture = @DateFacture
+      ,DateEcheance = @DateEcheance 
+      ,ReferenceAvanace = @ReferenceAvanace
+      ,MontantHT = @MontantHT
+      ,MontantTVA = @MontantTVA
+      ,MontantTTC = @MontantTTC
+      ,Redacteur = @Redacteur
+      ,VerifiyMidelt = @VerifiyMidelt
+      ,IdDesignation = @IdDesignation
+      ,Chantier = @Chantier
+      ,NetAPayer = @NetAPayer
+      ,Etat = @Etat
+  WHERE id = @id
+  and VerifiyMidelt = Non`,
+
   getfacturebyfournisseurid: `Select fa.* from [dbo].[DAF_FOURNISSEURS] f,[dbo].[DAF_Facture_Avance_Fusion] fa
   where
   f.id=@id and not
@@ -228,7 +285,7 @@ exports.factures = {
   FROM [dbo].[DAF_FOURNISSEURS] f
   INNER JOIN [dbo].[DAF_factureNavette] fa ON f.id = @id
   WHERE fa.idfacturenavette NOT IN (SELECT idAvance FROM [dbo].[DAF_LOG_FACTURE])
-  
+
 `,
 };
 
@@ -338,8 +395,9 @@ INNER JOIN chantier ch ON ch.id = fn.codechantier
   `,
 };
 exports.chantiers = {
-  getChantiers: "select * from chantier",
-  getcountChantier: "select count(*) from chantier",
+  getAll: `select * from [dbo].[CMT_Chantier] `,
+  getChantiers: "select * from [dbo].[CMT_Chantier]",
+  getcountChantier: "select count(*) from [dbo].[CMT_Chantier]",
   getChantiersbyfactureid: `SELECT * from chantier
   where  id in(
   select codechantier from DAF_FactureSaisie
@@ -352,36 +410,19 @@ exports.chantiers = {
 };
 
 exports.factureSaisie = {
-  getTTc: `SELECT TTC FROM DAF_FactureSaisie WHERE id = @idFacture`,
+  // getTTc: `SELECT TTC FROM DAF_FactureSaisie WHERE id = @idFacture`,
 
-  getfactureSaisie: `SELECT
-  f.id,
-  f.fullName,
-  f.numeroFacture,
-  f.BonCommande,
-  f.TTC AS TTC,
-  f.createdDate,
-  f.DateFacture,
-  f.HT,
-  f.MontantTVA,
-  d.designation as "designation",
-  fou.nom as "nom",
-  fou.CodeFournisseur,
-  f.verifiyMidelt,
-  f.updatedBy,
-  ch.LIBELLE as LIBELLE,
-f.dateecheance
-FROM [dbo].[DAF_FactureSaisie] f
-INNER JOIN [dbo].[FactureDesignation] d on d.id=f.iddesignation
-INNER JOIN [dbo].[DAF_FOURNISSEURS] fou on fou.id=f.idfournisseur
-LEFT JOIN [dbo].[chantier] ch on ch.id=f.codechantier
+  getfactureSaisie: `SELECT * FROM [dbo].[CMT_Facture] f
+INNER JOIN [dbo].[CMT_FactureDesignation] d on d.id=f.iddesignation
+INNER JOIN [dbo].[CMT_Fournisseurs] fou on fou.id=f.idfournisseur
+LEFT JOIN [dbo].[CMT_Chantier] ch on ch.id=f.chantier
 WHERE deletedAt is null
 `,
   getfactureSaisiecount: `
 SELECT COUNT(*) as count
-FROM [dbo].[DAF_FactureSaisie] f
-inner join [dbo].[FactureDesignation] d on d.id=f.iddesignation
-inner join   [dbo].[DAF_FOURNISSEURS] fou on fou.id=f.idfournisseur
+FROM [dbo].[CMT_Facture] f
+inner join [dbo].[CMT_FactureDesignation] d on d.id=f.iddesignation
+inner join  [dbo].[CMT_Fournisseurs] fou on fou.id=f.idfournisseur
 where deletedAt is null`,
   createfacture: `INSERT INTO [dbo].[DAF_FactureSaisie](
   [numeroFacture]
@@ -405,23 +446,12 @@ where deletedAt is null`,
     ,@codechantier
     ,@dateEcheance
     )`,
-  getOne: `select
-f.id,
-f.fullName
-,f.numeroFacture
-,f.BonCommande
-,f.TTC
-,f.DateFacture
-,f.HT
-,f.MontantTVA,
-d.designation as "designation" ,
-fou.nom as "nom",
-fou.CodeFournisseur,
-f.verifiyMidelt
-FROM [dbo].[DAF_FactureSaisie] f
-inner join [dbo].[FactureDesignation] d on d.id=f.iddesignation
-inner join   [dbo].[DAF_FOURNISSEURS] fou on fou.id=f.idfournisseur
-where deletedAt is null and f.id=@id`,
+  getOne: `SELECT * FROM [dbo].[CMT_Facture] f
+  INNER JOIN [dbo].[CMT_FactureDesignation] d on d.id=f.iddesignation
+  INNER JOIN [dbo].[CMT_Fournisseurs] fou on fou.id=f.idfournisseur
+  LEFT JOIN [dbo].[CMT_Chantier] ch on ch.id=f.chantier
+  WHERE deletedAt is null and f.id=@id`,
+
   alreadyexist:
     "select count(*) from  [dbo].[DAF_FactureSaisie] where numeroFacture =@numeroFacture and BonCommande =@BonCommande",
   delete: `UPDATE [dbo].[DAF_FactureSaisie]
@@ -640,11 +670,10 @@ group by  dfn1.ficheNavette,
 };
 
 exports.designation = {
-  getdesignationCount:
-    "SELECT COUNT(*) as cogetficheNavettebyfournisseurunt FROM [dbo].[FactureDesignation]",
-  getDesignation: "SELECT * FROM [dbo].[FactureDesignation] where 1=1 ",
-  getdesignationbynom: `SELECT *
-     FROM [dbo].[FactureDesignation]
+  getdesignationCount: "SELECT COUNT(*) FROM [dbo].[CMT_FactureDesignation]",
+  getDesignation: "SELECT * FROM [dbo].[CMT_FactureDesignation] where 1=1 ",
+  getdesignationbyid: `SELECT *
+     FROM [dbo].[CMT_FactureDesignation]
      where id=@id `,
 };
 exports.SuivieFacture = {
@@ -859,7 +888,7 @@ VALUES
   ,[montantVirement],
   v.Etat,
   v.dateoperation
-FROM  [dbo].[DAF_virementAvance] v ,
+  FROM  [dbo].[DAF_virementAvance] v ,
   [dbo].[DAF_RIB_Fournisseurs] rf,
   [dbo].[DAF_FOURNISSEURS] f
   where v.fournisseurId=f.CodeFournisseur
@@ -891,7 +920,7 @@ SELECT v.[id]
   ,[orderVirementId]
   ,f.nom
   ,rf.rib
-  ,[montantVirement],git
+  ,[montantVirement],
   v.Etat
 FROM  [dbo].[DAF_virementAvance] v ,
   [dbo].[DAF_RIB_Fournisseurs] rf,
@@ -904,21 +933,6 @@ and v.[id] = @id
   updateLogFactureWhenAnnuleV:
     "update [dbo].[DAF_virementAvance] set Etat = 'Annulé' where [orderVirementId] =@orderVirementId and nom=@nom",
 };
-
-// exports.BonLivraison = {
-//   getAllBl: `
-//   SELECT *
-//   FROM BonlivraisonTable
-// where 1=1
-
-//   `,
-//   getAllBlCount: `
-//   SELECT   count(*)
-//   FROM BonlivraisonTable
-//   where 1=1
-
-//     `,
-// };
 
 exports.BonLivraison = {
   getAllBl: `
@@ -984,4 +998,71 @@ exports.EcheanceLoi = {
         where idfournisseur=@idfournisseur
         group by idfournisseur)
 `,
+};
+
+exports.Avance = {
+  getAvancesCount: `Select count(*) from [dbo].[CMT_Avance]`,
+  getOneAvance: `select * from [dbo].[CMT_Avance] where id=@id`,
+  getAllAvances: `select a.id, BonCommande,MontantAvance, MontantTotal, DocumentReference, DateDocumentReference,
+  f.Nom, f.CodeFournisseur, Redacteur, DateAvance, NombreDeParties, CreatedDate,
+  Chantier, CumulRegle, CumulValide, Annulation, Restituer, Etat, c.LIBELLE
+  from [dbo].[CMT_Avance] a, [dbo].[CMT_Chantier] c , [dbo].[CMT_Fournisseurs] f
+  where a.Chantier = c.id
+  and a.IdFournisseur = f.id `,
+
+  createAvance: `INSERT INTO [dbo].[CMT_Avance]
+           ([id]
+           ,[BonCommande]
+           ,[MontantAvance]
+           ,[MontantTotal]
+           ,[DocumentReference]
+           ,[DateDocumentReference]
+           ,[IdFournisseur]
+           ,[Redacteur]
+           ,[DateAvance]
+           ,[NombreDeParties]
+           ,[Chantier]
+           ,[Restituer])
+     VALUES
+           (@id
+           ,@BonCommande
+           ,@MontantAvance
+           ,@MontantTotal
+           ,@DocumentReference
+           ,@DateDocumentReference
+           ,@IdFournisseur
+           ,@Redacteur
+           ,@DateAvance
+           ,@NombreDeParties
+           ,@Chantier
+           ,@Restituer)
+`,
+  updateAvance: `UPDATE [dbo].[CMT_Avance] set BonCommande = @BonCommande
+      ,MontantAvance = @MontantAvance
+      ,MontantTotal = @MontantTotal
+      ,DocumentReference = @DocumentReference
+      ,DateDocumentReference = @DateDocumentReference
+      ,IdFournisseur = @IdFournisseur
+      ,Redacteur = @Redacteur
+      ,DateAvance = @DateAvance
+      ,NombreDeParties = @NombreDeParties
+      ,Chantier = @Chantier
+      ,Restituer = @Restituer
+ WHERE id = @id`,
+
+  getavancebyfournisseur: `select a.id, BonCommande,MontantAvance, MontantTotal, DocumentReference, DateDocumentReference,
+  f.Nom, f.CodeFournisseur, Redacteur, DateAvance, NombreDeParties, CreatedDate,
+  Chantier, CumulRegle, CumulValide, Annulation, Restituer, Etat, c.LIBELLE
+  from [dbo].[CMT_Avance] a, [dbo].[CMT_Chantier] c , [dbo].[CMT_Fournisseurs] f
+  where a.Chantier = c.id
+  and a.IdFournisseur = f.id
+  and f.CodeFournisseur = @idfournisseur`,
+
+  getavancebyboncommande: `select a.id, BonCommande,MontantAvance, MontantTotal, DocumentReference, DateDocumentReference,
+  f.Nom, f.CodeFournisseur, Redacteur, DateAvance, NombreDeParties, CreatedDate,
+  Chantier, CumulRegle, CumulValide, Annulation, Restituer, Etat, c.LIBELLE
+  from [dbo].[CMT_Avance] a, [dbo].[CMT_Chantier] c , [dbo].[CMT_Fournisseurs] f
+  where a.Chantier = c.id
+  and a.IdFournisseur = f.id
+  and BonCommande = @bonCommande`,
 };

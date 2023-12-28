@@ -5,7 +5,6 @@ exports.getRibCountAtner = async (req, res, next) => {
   try {
     const pool = await getConnection();
     const result = await pool.request().query(ribAtner.getCount);
-
     req.count = result.recordset[0].count;
     console.log(req.count);
     // res.json({ count: res.conut });

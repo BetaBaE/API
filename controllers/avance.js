@@ -1,5 +1,5 @@
 const { getConnection, getSql } = require("../database/connection");
-const { factures } = require("../database/querys");
+const { Avance } = require("../database/querys");
 
 const idGenerator = async (TableId) => {
   // Function to generate an ID by concatenating multiple data elements
@@ -74,11 +74,15 @@ const idGenerator = async (TableId) => {
   return id; // Return the generated ID
 };
 
-exports.getFacturesCount = async (req, res, next) => {
+// console.log(idGenerator("FA", 10052));
+
+exports.getAvanceCount = async (req, res, next) => {
   try {
     const pool = await getConnection();
-    const result = await pool.request().query(factures.getCount);
+    const result = await pool.request().query(Avance.getAvancesCount);
     req.count = result.recordset[0].count;
+    console.log(req.count);
+    // res.json({ count: res.conut });
     next();
   } catch (error) {
     res.status(500);
@@ -87,7 +91,24 @@ exports.getFacturesCount = async (req, res, next) => {
   }
 };
 
-exports.getFactures = async (req, res) => {
+exports.getAvanceById = async (req, res) => {
+  try {
+    const pool = await getConnection();
+    const result = await pool
+      .request()
+      .input("id", getSql().VarChar, req.params.id)
+      .query(Avance.getOneAvance);
+
+    res.set("Content-Range", `Avance 0-1/1`);
+
+    res.json(result.recordset[0]);
+  } catch (error) {
+    res.send(error.message);
+    res.status(500);
+  }
+};
+
+exports.getAllAvances = async (req, res) => {
   try {
     let range = req.query.range || "[0,9]";
     let sort = req.query.sort || '["id" , "ASC"]';
@@ -97,25 +118,28 @@ exports.getFactures = async (req, res) => {
     filter = JSON.parse(filter);
     console.log(filter);
     let queryFilter = "";
-    if (filter.NumeroFacture) {
-      queryFilter += ` and upper(NumeroFacture) like(upper('%${filter.NumeroFacture}%'))`;
-    }
-    if (filter.BonCommande) {
-      queryFilter += ` and BonCommande like('%${filter.BonCommande}%')`;
-    }
 
+    if (filter.BonCommande) {
+      queryFilter += ` and upper(BonCommande) like(upper('%${filter.BonCommande}%'))`;
+    }
+    if (filter.Chantier) {
+      queryFilter += ` and upper(Chantier) like('%${filter.Chantier}%')`;
+    }
+    if (filter.Etat) {
+      queryFilter += ` and upper(Etat) like('%${filter.Etat}%')`;
+    }
     console.log(queryFilter);
     const pool = await getConnection();
 
     const result = await pool.request().query(
-      `${factures.getAll} ${queryFilter} Order by ${sort[0]} ${sort[1]}
+      `${Avance.getAllAvances} ${queryFilter} Order by ${sort[0]} ${sort[1]}
       OFFSET ${range[0]} ROWS FETCH NEXT ${range[1] + 1 - range[0]} ROWS ONLY`
     );
 
     console.log(req.count);
     res.set(
       "Content-Range",
-      `factures ${range[0]}-${range[1] + 1 - range[0]}/${req.count}`
+      `avances ${range[0]}-${range[1] + 1 - range[0]}/${req.count}`
     );
     res.json(result.recordset);
   } catch (error) {
@@ -124,113 +148,54 @@ exports.getFactures = async (req, res) => {
   }
 };
 
-exports.getFacturesById = async (req, res) => {
-  try {
-    const pool = await getConnection();
-    const result = await pool
-      .request()
-      .input("id", getSql().VarChar, req.params.id)
-      .query(factures.getOne);
-
-    res.set("Content-Range", `factures 0-1/1`);
-
-    res.json(result.recordset[0]);
-  } catch (error) {
-    res.send(error.message);
-    res.status(500);
-  }
-};
-
-exports.getAllFactures = async (req, res) => {
-  try {
-    const pool = await getConnection();
-
-    const result = await pool.request().query(factures.getAllFactures);
-
-    res.set("Content-Range", `factures 0 - ${req.count}/${req.count}`);
-
-    res.json(result.recordset);
-  } catch (error) {
-    res.send(error.message);
-    res.status(500);
-  }
-};
-
-exports.createfacture = async (req, res) => {
+exports.createAvances = async (req, res) => {
   const {
-    NumeroFacture,
     BonCommande,
+    MontantAvance,
+    MontantTotal,
+    DocumentReference,
+    DateDocumentReference,
     IdFournisseur,
-    DateFacture,
-    DateEcheance,
-    ReferenceAvanace,
-    MontantHT,
-    MontantTVA,
-    MontantTTC,
     Redacteur,
-    VerifiyMidelt,
-    IdDesignation,
+    DateAvance,
+    NombreDeParties,
     Chantier,
-    NetAPayer,
-    Etat,
+    Restituer,
   } = req.body;
+
   try {
     const pool = await getConnection();
+
     await pool
       .request()
-      .input("id", getSql().VarChar, await idGenerator("FA"))
-      .input(
-        "NumeroFacture",
-        getSql().VarChar,
-        new String(req.body.NumeroFacture)
-      )
-      .input("BonCommande", getSql().VarChar, new String(req.body.BonCommande))
-      .input("IdFournisseur", getSql().Int, new String(req.body.IdFournisseur))
-      .input("DateFacture", getSql().DateTime, new String(req.body.DateFacture))
-      .input(
-        "DateEcheance",
-        getSql().DateTime,
-        new String(req.body.DateEcheance)
-      )
-      .input(
-        "ReferenceAvanace",
-        getSql().VarChar,
-        new String(req.body.ReferenceAvanace)
-      )
-      .input("MontantHT", getSql().Numeric(10, 3), req.body.MontantHT)
-      .input("MontantTVA", getSql().Numeric(10, 3), req.body.MontantHT)
-      .input("MontantTTC", getSql().Numeric(10, 3), req.body.MontantTTC)
-      .input("Redacteur", getSql().VarChar, req.body.Redacteur)
-      .input("VerifiyMidelt", getSql().VarChar, req.body.VerifiyMidelt)
-      .input("IdDesignation", getSql().Int, req.body.IdDesignation)
-      .input("Chantier", getSql().VarChar, req.body.Chantier)
-      .input("NetAPayer", getSql().Numeric(10, 3), req.body.NetAPayer)
-      .input("Etat", getSql().VarChar, req.body.Etat)
-      .input(
-        "codechantier",
-        getSql().VarChar,
-        new String(req.body.codechantier)
-      )
-      .query(factures.createfacture);
-    console.log("errour");
+      .input("id", getSql().VarChar, await idGenerator("AV"))
+      .input("BonCommande", getSql().VarChar, BonCommande)
+      .input("MontantAvance", getSql().Numeric, MontantAvance)
+      .input("MontantTotal", getSql().Numeric, MontantTotal)
+      .input("DocumentReference", getSql().VarChar, DocumentReference)
+      .input("DateDocumentReference", getSql().DateTime, DateDocumentReference)
+      .input("IdFournisseur", getSql().Int, IdFournisseur)
+      .input("Redacteur", getSql().VarChar, Redacteur)
+      .input("DateAvance", getSql().DateTime, DateAvance)
+      .input("NombreDeParties", getSql().Int, NombreDeParties)
+      .input("Chantier", getSql().VarChar, Chantier)
+      .input("Restituer", getSql().VarChar, Restituer)
+
+      .query(Avance.createAvance);
+    console.log("success");
     res.json({
       id: "",
-      NumeroFacture,
       BonCommande,
+      MontantAvance,
+      MontantTotal,
+      DocumentReference,
+      DateDocumentReference,
       IdFournisseur,
-      DateFacture,
-      DateEcheance,
-      ReferenceAvanace,
-      MontantHT,
-      MontantTVA,
-      MontantTTC,
       Redacteur,
-      MontantTTC,
-      VerifiyMidelt,
-      IdDesignation,
+      DateAvance,
+      NombreDeParties,
       Chantier,
-      NetAPayer,
-      Etat,
+      Restituer,
     });
   } catch (error) {
     // switch (error.originalError.info.number) {
@@ -244,44 +209,36 @@ exports.createfacture = async (req, res) => {
 
     res.status(500);
     res.send(error.message);
-    console.log(error.message);
+    console.log(error);
   }
 };
 
-exports.updateFacture = async (req, res) => {
+exports.updateAvances = async (req, res) => {
   const {
-    NumeroFacture,
     BonCommande,
+    MontantAvance,
+    MontantTotal,
+    DocumentReference,
+    DateDocumentReference,
     IdFournisseur,
-    DateFacture,
-    DateEcheance,
-    ReferenceAvanace,
-    MontantHT,
-    MontantTVA,
-    MontantTTC,
     Redacteur,
-    VerifiyMidelt,
-    IdDesignation,
+    DateAvance,
+    NombreDeParties,
     Chantier,
-    NetAPayer,
-    Etat,
+    Restituer,
   } = req.body;
   if (
-    NumeroFacture == null ||
     BonCommande == null ||
+    MontantAvance == null ||
+    MontantTotal == null ||
+    DocumentReference == null ||
+    DateDocumentReference == null ||
     IdFournisseur == null ||
-    DateFacture == null ||
-    DateEcheance == null ||
-    ReferenceAvanace == null ||
-    MontantHT == null ||
-    MontantTVA == null ||
-    MontantTTC == null ||
     Redacteur == null ||
-    VerifiyMidelt == null ||
-    IdDesignation == null ||
+    DateAvance == null ||
+    NombreDeParties == null ||
     Chantier == null ||
-    NetAPayer == null ||
-    Etat == null
+    Restituer == null
   ) {
     return res.status(400).json({ error: "all field is required" });
   }
@@ -290,40 +247,33 @@ exports.updateFacture = async (req, res) => {
 
     await pool
       .request()
-      .input("NumeroFacture", getSql().VarChar, NumeroFacture)
       .input("BonCommande", getSql().VarChar, BonCommande)
-      .input("IdFournisseur", getSql().Int, IdFournisseur)
-      .input("DateFacture", getSql().DateTime, DateFacture)
-      .input("DateEcheance", getSql().DateTime, DateEcheance)
-      .input("ReferenceAvanace", getSql().VarChar, ReferenceAvanace)
-      .input("MontantHT", getSql().Numeric, MontantHT)
-      .input("MontantTVA", getSql().Numeric, MontantTVA)
-      .input("MontantTTC", getSql().Numeric, MontantTTC)
+      .input("MontantAvance", getSql().Numeric, MontantAvance)
+      .input("MontantTotal", getSql().Numeric, MontantTotal)
+      .input("DocumentReference", getSql().VarChar, DocumentReference)
+      .input("DateDocumentReference", getSql().DateTime, DateDocumentReference)
+      .input("IdFournisseur", getSql().VarChar, IdFournisseur)
       .input("Redacteur", getSql().VarChar, Redacteur)
-      .input("VerifiyMidelt", getSql().VarChar, VerifiyMidelt)
-      .input("IdDesignation", getSql().Int, IdDesignation)
+      .input("DateAvance", getSql().DateTime, DateAvance)
+      .input("NombreDeParties", getSql().Int, NombreDeParties)
       .input("Chantier", getSql().VarChar, Chantier)
-      .input("NetAPayer", getSql().Numeric, NetAPayer)
-      .input("Etat", getSql().VarChar, Etat)
+      .input("Restituer", getSql().VarChar, Restituer)
       .input("id", getSql().Int, req.params.id)
-      .query(factures.updateFacture);
+      .query(Avance.updateAvance);
 
     res.json({
-      NumeroFacture,
       BonCommande,
+      MontantAvance,
+      MontantTotal,
+      DocumentReference,
+      DateDocumentReference,
       IdFournisseur,
-      DateFacture,
-      DateEcheance,
-      ReferenceAvanace,
-      MontantHT,
-      MontantTVA,
-      MontantTTC,
       Redacteur,
-      VerifiyMidelt,
-      IdDesignation,
+      DateAvance,
+      NombreDeParties,
       Chantier,
-      NetAPayer,
-      Etat,
+      NombreDeParties,
+      Restituer,
       id: req.params.id,
     });
   } catch (error) {
@@ -332,16 +282,32 @@ exports.updateFacture = async (req, res) => {
   }
 };
 
-exports.getfacturebyfournisseurid = async (req, res) => {
+exports.avancesByFournisseur = async (req, res) => {
   try {
     const pool = await getConnection();
-
     const result = await pool
       .request()
-      .input("id", getSql().Int, req.params.id)
-      .query(factures.getfacturebyfournisseurid);
+      .input("idfournisseur", getSql().VarChar, req.params.idfournisseur)
+      .query(Avance.getavancebyfournisseur);
 
-    res.set("Content-Range", `factures 0-1/1`);
+    res.set("Content-Range", `Avance 0-1/1`);
+
+    res.json(result.recordset);
+  } catch (error) {
+    res.send(error.message);
+    res.status(500);
+  }
+};
+
+exports.avancesByBonCommande = async (req, res) => {
+  try {
+    const pool = await getConnection();
+    const result = await pool
+      .request()
+      .input("bonCommande", getSql().VarChar, req.params.bonCommande)
+      .query(Avance.getavancebyboncommande);
+
+    res.set("Content-Range", `Avance 0-1/1`);
 
     res.json(result.recordset);
   } catch (error) {
